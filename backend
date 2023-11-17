@@ -1,0 +1,39 @@
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+const rooms = {}; // Store active rooms and their participants
+
+io.on('connection', (socket) => {
+  // Handle joining a room
+  socket.on('joinRoom', (roomId, username) => {
+    socket.join(roomId);
+    if (!rooms[roomId]) {
+      rooms[roomId] = [];
+    }
+    rooms[roomId].push({ id: socket.id, username });
+    io.to(roomId).emit('userJoined', rooms[roomId]);
+  });
+
+  // Handle sending messages in a room
+  socket.on('sendMessage', (roomId, message) => {
+    io.to(roomId).emit('message', message);
+  });
+
+  // Handle leaving a room
+  socket.on('leaveRoom', (roomId) => {
+    if (rooms[roomId]) {
+      rooms[roomId] = rooms[roomId].filter((participant) => participant.id !== socket.id);
+      io.to(roomId).emit('userLeft', rooms[roomId]);
+    }
+    socket.leave(roomId);
+  });
+});
+
+server.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
