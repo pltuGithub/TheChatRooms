@@ -1,0 +1,61 @@
+<!-- HTML -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Room</title>
+</head>
+<body>
+  <input type="text" id="roomIdInput" placeholder="Enter Room ID">
+  <input type="text" id="usernameInput" placeholder="Enter Username">
+  <button onclick="joinRoom()">Join Room</button>
+  
+  <div id="chatRoom" style="display: none;">
+    <h2>Chat Room</h2>
+    <ul id="messages"></ul>
+    <input type="text" id="messageInput" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+  </div>
+
+  <script src="https://cdn.socket.io/socket.io-4.3.2.js"></script>
+  <script>
+    const socket = io();
+
+    function joinRoom() {
+      const roomId = document.getElementById('roomIdInput').value;
+      const username = document.getElementById('usernameInput').value;
+      socket.emit('joinRoom', roomId, username);
+      document.getElementById('chatRoom').style.display = 'block';
+    }
+
+    function sendMessage() {
+      const roomId = document.getElementById('roomIdInput').value;
+      const message = document.getElementById('messageInput').value;
+      socket.emit('sendMessage', roomId, message);
+      document.getElementById('messageInput').value = '';
+    }
+
+    function leaveRoom() {
+      const roomId = document.getElementById('roomIdInput').value;
+      socket.emit('leaveRoom', roomId);
+      document.getElementById('chatRoom').style.display = 'none';
+    }
+
+    socket.on('message', (message) => {
+      const messages = document.getElementById('messages');
+      const li = document.createElement('li');
+      li.textContent = message;
+      messages.appendChild(li);
+    });
+
+    socket.on('userJoined', (participants) => {
+      console.log('Participants:', participants);
+    });
+
+    socket.on('userLeft', (participants) => {
+      console.log('Participants:', participants);
+    });
+  </script>
+</body>
+</html>
